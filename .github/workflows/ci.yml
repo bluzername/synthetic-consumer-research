@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install UV
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Add UV to PATH
+      run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Run tests
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY || 'sk-or-v1-dummy-key-for-testing' }}
+      run: |
+        uv run pytest tests/ -v --tb=short
+
+    - name: Check imports
+      run: |
+        uv run python -c "from src.utils import ProductConcept, Persona, get_config; print('Imports successful')"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install UV
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Add UV to PATH
+      run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Check Python syntax
+      run: |
+        find src tests -name "*.py" -type f -exec uv run python -m py_compile {} \;
+
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check required files exist
+      run: |
+        test -f README.md || exit 1
+        test -f LICENSE || exit 1
+        test -f CONTRIBUTING.md || exit 1
+        test -f CHANGELOG.md || exit 1
+        test -f pyproject.toml || exit 1
+        test -f config/settings.yaml || exit 1
+        test -f config/prompts.yaml || exit 1
+        echo "All required files present"
+
+    - name: Check directory structure
+      run: |
+        test -d src/agents || exit 1
+        test -d src/utils || exit 1
+        test -d src/orchestration || exit 1
+        test -d src/visualization || exit 1
+        test -d src/post_composer || exit 1
+        test -d tests || exit 1
+        test -d docs || exit 1
+        test -d config || exit 1
+        echo "Directory structure valid"
+
+    - name: Check documentation files
+      run: |
+        test -f docs/README.md || exit 1
+        test -f docs/SETUP.md || exit 1
+        test -f docs/METHODOLOGY.md || exit 1
+        test -f docs/ETHICS.md || exit 1
+        echo "Documentation complete"
+
