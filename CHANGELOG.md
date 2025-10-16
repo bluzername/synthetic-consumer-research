@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CONTRIBUTING.md with detailed contribution guidelines
 - LICENSE file (MIT)
 - CHANGELOG.md to track project changes
+- Academic Foundation section in README with recent validation studies
+- Research badge linking to Maier et al. (2025) paper validating LLM-based consumer research
 
 ### Changed
 - Updated academic citations in METHODOLOGY.md with real research papers (Argyle et al., Park et al., Madaan et al.)
