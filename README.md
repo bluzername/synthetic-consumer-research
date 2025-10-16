@@ -1,5 +1,4 @@
-# AI Product Ideation System
-
+# Synthetic Consumer Research
 > Transform weeks of product research into hours of AI-assisted innovation
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
