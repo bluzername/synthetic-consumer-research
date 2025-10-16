@@ -1,0 +1,116 @@
+# Product Ideation System - Central Configuration
+
+system:
+  project_name: "product-ideation-system"
+  version: "1.0.0"
+  output_base_dir: "outputs"
+
+# Model configuration for OpenRouter
+models:
+  # Creative ideation - best for generating innovative concepts
+  ideator: "google/gemini-2.5-flash" #"anthropic/claude-3.5-sonnet" changed since this was VERY expensive
+  ideator_temperature: 0.7
+  ideator_max_tokens: 4000
+  
+  # Market prediction - high context for analyzing many personas
+  market_predictor: "google/gemini-2.5-flash" #"google/gemini-2.5-pro" changed since this was VERY expensive
+  market_predictor_temperature: 0.6
+  market_predictor_max_tokens: 4000
+  
+  # Critic - analytical feedback generation
+  critic: "google/gemini-2.5-flash" #"anthropic/claude-3.5-sonnet" changed since this was VERY expensive
+  critic_temperature: 0.5
+  critic_max_tokens: 2000
+  
+  # Persona generation
+  persona_generator: "google/gemini-2.5-flash"
+  persona_temperature: 0.8
+  
+  # Image generation
+  image_generator: "google/gemini-2.5-flash-image"
+  
+  # Fallback model if primary fails
+  fallback_model: "google/gemini-2.5-flash"
+
+# Workflow parameters
+workflow:
+  max_iterations: 5
+  pmf_threshold: 40.0
+  personas_count: 20  # Reduced from 100 for more reliable JSON parsing (increase after testing)
+  min_persona_diversity: true
+  
+# PMF Scoring thresholds (Sean Ellis methodology)
+pmf:
+  excellent_threshold: 40.0
+  good_threshold: 30.0
+  poor_threshold: 20.0
+  
+# Image generation settings
+visualization:
+  primary_engine: "google/gemini-2.5-flash-image"
+  product_render_count: 2
+  generate_infographics: true
+  
+  # Image dimensions for different platforms
+  x_image_size: [1200, 675]  # 16:9 aspect ratio
+  linkedin_image_size: [1200, 627]  # 1.91:1 aspect ratio
+  instagram_image_size: [1080, 1080]  # 1:1 aspect ratio
+  
+  # Infographic styling
+  infographic_style: "professional"
+  color_scheme: "blue"
+  dpi: 300
+
+# Social media platform specifications
+social_media:
+  x:
+    max_characters: 280
+    optimal_length: 100  # Higher engagement
+    image_size: [1200, 675]
+    hashtags_max: 2
+    include_emoji: true
+    
+  linkedin:
+    max_characters: 3000
+    optimal_length: 1500
+    image_size: [1200, 627]
+    hashtags_recommended: 5
+    include_emoji: false
+    use_markdown: true
+
+# AI Ethics and Transparency
+ethics:
+  ai_disclosure: true
+  disclosure_emoji: "🤖"
+  methodology_link: "https://github.com/yourusername/product-ideation-system"
+  
+  x_disclosure: "🤖 AI-powered product ideation. Methodology: {link}"
+  linkedin_disclosure: |
+    ---
+    🤖 **Methodology**: This concept was developed using AI-powered ideation with synthetic market simulation across {personas_count}+ consumer personas. Full process documented at {link}.
+
+# API management
+api:
+  rate_limit_calls: 50
+  rate_limit_period: 60  # seconds
+  retry_attempts: 3
+  retry_backoff_factor: 2
+  timeout: 30  # seconds
+  
+# Logging and analytics
+logging:
+  level: "INFO"
+  track_costs: true
+  track_iterations: true
+  save_analytics: true
+  console_output: true
+  rich_formatting: true
+
+# Feature flags
+features:
+  enable_image_generation: true
+  enable_infographics: true
+  enable_social_posts: true
+  enable_cost_tracking: true
+  enable_batch_processing: false
+

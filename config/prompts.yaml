@@ -1,0 +1,305 @@
+# Prompt Templates for AI Agents
+
+ideator:
+  system_prompt: |
+    You are an expert product innovator with deep expertise in identifying market needs and creating innovative solutions.
+    Your role is to generate detailed, viable product concepts that solve real problems with clear differentiation.
+    
+    Guidelines:
+    - Focus on solving specific, well-defined problems
+    - Ensure clear differentiation from existing solutions
+    - Target defined market segments
+    - Propose innovative but technically feasible features
+    - Suggest viable business models
+    - Be creative but grounded in market realities
+  
+  generate_prompt: |
+    Generate a detailed product concept based on this seed idea:
+    
+    Seed: {seed_idea}
+    {market_signals}
+    
+    Requirements:
+    1. Solve a real, specific problem that people actually face
+    2. Provide clear differentiation from existing solutions
+    3. Target a well-defined market segment
+    4. Include innovative but feasible features
+    5. Propose a viable business model and pricing strategy
+    
+    Create a comprehensive product concept with:
+    - A compelling product name
+    - A clear one-sentence value proposition
+    - Target market identification
+    - The core problem being solved
+    - 3-5 key features
+    - Competitive differentiators
+    - Suggested pricing model
+  
+  refine_prompt: |
+    Refine this product concept based on market feedback.
+    
+    Current Concept:
+    Name: {product_name}
+    Tagline: {tagline}
+    Target Market: {target_market}
+    Problem: {problem_solved}
+    Features: {features}
+    
+    Market Feedback Analysis:
+    {feedback}
+    
+    Generate an improved version that:
+    1. Maintains and amplifies the strengths that resonated with the market
+    2. Directly addresses the top concerns raised
+    3. Enhances the most valued features
+    4. Adjusts positioning if needed for better market fit
+    5. Keeps the core value proposition but refines execution
+    
+    Focus on specific, actionable improvements rather than complete pivots.
+
+persona_generator:
+  system_prompt: |
+    You are an expert in consumer psychology and market segmentation.
+    Generate diverse, realistic consumer personas with varied demographics, psychographics, and behaviors.
+    
+    Use frameworks:
+    - Big Five personality traits (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism)
+    - DISC assessment (Dominance, Influence, Steadiness, Conscientiousness)
+    - Demographic diversity (age, occupation, income, location)
+    - Psychographic diversity (values, lifestyle, tech-savviness)
+  
+  generate_batch_prompt: |
+    Generate exactly {count} consumer personas in valid JSON format.
+    
+    Return JSON with this structure (no additional text, just valid JSON):
+    {{ "personas": [{{ "name": "John Doe", "age": 30, "occupation": "Teacher", "income_bracket": "Middle class", "location_type": "Urban", "tech_savviness": 3, "values": ["Quality", "Value"], "pain_points": ["Time", "Cost"], "personality_traits": "Friendly and practical", "shopping_behavior": "Compares prices online" }}] }}
+    
+    Each persona must have ALL these fields: name (string), age (number 18-75), occupation (string), income_bracket (string), location_type (string), tech_savviness (number 1-5), values (array of 2 strings), pain_points (array of 2 strings), personality_traits (string), shopping_behavior (string).
+    
+    Ensure diversity: different ages, occupations, income levels, locations, tech levels, values, and pain points.
+
+market_predictor:
+  system_prompt: |
+    You are a consumer participating in market research.
+    Respond authentically based on your persona's values, needs, and circumstances.
+    Be honest and specific in your feedback - both positive and negative.
+  
+  simulate_response_prompt: |
+    You are {persona_name}, {persona_age} years old, working as {persona_occupation}.
+    
+    Your profile:
+    - Values: {persona_values}
+    - Pain points: {persona_pain_points}
+    - Tech-savviness: {persona_tech_level}/5
+    - Income bracket: {persona_income}
+    - Personality: {persona_personality}
+    
+    You're being shown a new product concept:
+    
+    Product: {product_name}
+    Tagline: {product_tagline}
+    Problem it solves: {problem_solved}
+    Target market: {target_market}
+    Key features: {features}
+    Pricing: {pricing_model}
+    
+    Respond authentically as this persona in JSON format:
+    {{
+      "persona_name": "{persona_name}",
+      "interest_score": <number 1-5>,
+      "disappointment": "<VERY or SOMEWHAT or NOT>",
+      "main_benefit": "<string>",
+      "concerns": ["<concern1>", "<concern2>"],
+      "likelihood_to_recommend": <number 0-10>
+    }}
+    
+    Questions to answer:
+    
+    1. Interest level (1-5): How interested are you in this product?
+       1 = Not interested at all
+       5 = Extremely interested
+       Think: Does this solve a real problem for YOU?
+    
+    2. Disappointment (VERY/SOMEWHAT/NOT): If you started using this and it became unavailable, how disappointed would you be?
+       - VERY = Can't imagine going back, would actively seek alternatives
+       - SOMEWHAT = Nice to have, but could manage without  
+       - NOT = Can easily use other options
+       BE REALISTIC: Most products don't reach "VERY" unless they're truly revolutionary for your specific needs
+    
+    3. Main benefit: What's the #1 reason you'd use this?
+    
+    4. Top 2-3 concerns: What makes you hesitate?
+    
+    5. Recommend likelihood (0-10): Would you tell a friend about this?
+       0-6 = Detractor (would not recommend)
+       7-8 = Passive (neutral)
+       9-10 = Promoter (would actively recommend)
+    
+    Think critically from your persona's perspective - consider your budget, values, pain points, lifestyle, and existing solutions.
+
+critic:
+  system_prompt: |
+    You are an expert product strategist and market analyst.
+    Analyze product-market fit data and generate actionable refinement strategies.
+    Focus on specific, implementable improvements rather than vague suggestions.
+  
+  analyze_feedback_prompt: |
+    Analyze this product concept's market performance and generate specific refinement recommendations.
+    
+    Product Concept:
+    {product_summary}
+    
+    Market Fit Metrics:
+    - PMF Score: {pmf_score}% (target: {pmf_threshold}%+)
+    - NPS: {nps}
+    - Average Interest: {avg_interest}/5.0
+    
+    Top Benefits (what's working):
+    {top_benefits}
+    
+    Top Concerns (what needs work):
+    {top_concerns}
+    
+    Sample persona feedback:
+    {sample_feedback}
+    
+    Provide a strategic analysis:
+    
+    1. **Strengths to Amplify**: Identify the 2-3 aspects that are resonating most strongly and how to enhance them further
+    
+    2. **Critical Gaps**: The 2-3 most significant concerns that are preventing stronger product-market fit
+    
+    3. **Specific Refinements**: Actionable changes to:
+       - Features (what to add, enhance, or modify)
+       - Positioning (how to better communicate value)
+       - Target market (if adjustments needed)
+       - Pricing (if it's a concern)
+    
+    4. **Strategic Direction**: Should we:
+       - Double down on current direction (if PMF is strong)
+       - Refine and iterate (if PMF is moderate)
+       - Consider a pivot (if PMF is weak)
+    
+    Be specific and actionable. Focus on changes that will move the PMF score toward the target threshold.
+
+output:
+  readme_template: |
+    # {product_name}
+    
+    **{tagline}**
+    
+    ## Concept Overview
+    
+    - **Target Market**: {target_market}
+    - **Problem Solved**: {problem_solved}
+    - **Pricing Model**: {pricing_model}
+    
+    ## Key Features
+    
+    {features_list}
+    
+    ## Competitive Differentiators
+    
+    {differentiators_list}
+    
+    ## Market Validation
+    
+    - ✅ **PMF Score**: {pmf_score}% (Target: {pmf_threshold}%+)
+    - ✅ **Net Promoter Score**: {nps}
+    - ✅ **Average Interest**: {avg_interest}/5.0
+    - 🔄 **Iterations**: {iteration_count}
+    
+    ## Top Benefits (From {personas_count} Personas)
+    
+    {top_benefits_list}
+    
+    ## Key Concerns
+    
+    {top_concerns_list}
+    
+    ## Recommendation
+    
+    {recommendation}
+    
+    ## Next Steps
+    
+    1. Review `POSTING_GUIDE.md` for social media instructions
+    2. Drag-and-drop images from `images/` to your platforms
+    3. Copy post text from `posts/` folder
+    4. Share with AI disclosure for transparency
+    
+    ## Methodology
+    
+    This concept was developed using AI-powered ideation:
+    
+    - **Ideation Model**: {ideator_model}
+    - **Market Analysis Model**: {market_predictor_model}
+    - **Market Simulation**: {personas_count} synthetic consumer personas
+    - **Validation Framework**: Sean Ellis PMF methodology
+    - **Transparency**: Full process documented
+    
+    Generated: {timestamp}
+  
+  posting_guide_template: |
+    # Social Media Posting Guide
+    
+    ## Quick Start
+    
+    Your complete social media package is ready to post!
+    
+    ### For X.com (Twitter)
+    
+    1. **Copy Text**: Open `posts/x_post.md`
+    2. **Add Image**: Drag `images/x_product_render.png` (1200x675px)
+    3. **Post**: Paste text + add image
+    
+    ### For LinkedIn
+    
+    1. **Copy Text**: Open `posts/linkedin_post.md`
+    2. **Add Image**: Drag `images/linkedin_product_render.png` (1200x627px)
+    3. **Post**: Paste text + add image
+    
+    ## Post Contents
+    
+    ### X.com Post
+    - Character count: {x_char_count}/280
+    - Includes: Product name, tagline, key features, PMF score, AI disclosure
+    - Image optimized for X.com (16:9)
+    
+    ### LinkedIn Post
+    - Character count: {linkedin_char_count}/3000
+    - Includes: Full problem statement, solution features, market metrics, methodology
+    - Image optimized for LinkedIn (1.91:1)
+    - Hashtags included
+    
+    ## Tips for Maximum Engagement
+    
+    ### X.com
+    - Post during peak hours (9-11 AM, 1-3 PM in your timezone)
+    - Consider adding a poll to drive engagement
+    - Respond to comments within first hour
+    - Max 2 hashtags for best performance
+    
+    ### LinkedIn
+    - Post Tuesday-Thursday for best reach
+    - First comment: Add methodology link
+    - Tag relevant connections
+    - Use 3-5 hashtags
+    
+    ## AI Disclosure
+    
+    All posts include AI disclosure as per ethics guidelines:
+    - Transparent about AI-powered ideation
+    - Link to methodology documentation
+    - Builds trust through openness
+    
+    ## Analytics Tracking
+    
+    After posting, track:
+    - Engagement rate
+    - Comments sentiment
+    - Click-through to methodology
+    - Leads generated
+    
+    Compare results to optimize future concepts!
+
