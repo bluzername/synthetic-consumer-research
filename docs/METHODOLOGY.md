@@ -150,7 +150,7 @@ This system uses artificial intelligence to generate product concepts and valida
 - Maintains core value proposition
 - Makes incremental, targeted improvements
 
-**Why This Works**: Self-refine loop with feedback has been shown to improve LLM outputs iteratively (research: Self-Refine, Constitutional AI).
+**Why This Works**: Self-refine loop with feedback has been shown to improve LLM outputs iteratively (Madaan et al. 2023 - "Self-Refine: Iterative Refinement with Self-Feedback", arXiv:2303.17651; Bai et al. 2022 - "Constitutional AI: Harmlessness from AI Feedback", arXiv:2212.08073).
 
 **Max Iterations**: 5 (default) to prevent diminishing returns
 
@@ -198,13 +198,14 @@ This system uses artificial intelligence to generate product concepts and valida
 ## Validation Studies
 
 **Synthetic Persona Accuracy**:
-- Research: Smith et al. (2023) - "LLM-based personas achieve 73% alignment with real survey data"
-- Our validation: Cross-referenced 3 concepts with real user surveys, 68-82% correlation in top concerns
+- Research: Argyle et al. (2023) - "Out of One, Many: Using Language Models to Simulate Human Samples" - Demonstrates LLMs can simulate diverse human responses with reasonable accuracy for survey research
+- Research: Park et al. (2023) - "Generative Agents: Interactive Simulacra of Human Behavior" (Stanford) - Shows LLM-based agents can exhibit believable human-like behavior patterns
+- Note: While these studies show promise, synthetic personas should be validated with real users before major investment decisions
 
 **PMF Methodology**:
-- Sean Ellis: 40% threshold validated across 500+ startups
-- Products above 40% had 3x higher Series A success rate
-- Our system targets same threshold
+- Sean Ellis (2010): "The Startup Pyramid" - 40% threshold based on analysis of 100+ startups that achieved product-market fit
+- Superhuman case study: Ellis's survey methodology helped validate their PMF before scaling
+- Our system uses this threshold as a benchmark, though early-stage concepts may require adjusted expectations (see ENHANCED_METRICS_PROPOSAL.md)
 
 **Limitations of Synthetic Data**:
 - May miss cultural subtleties
@@ -272,10 +273,28 @@ This system uses artificial intelligence to generate product concepts and valida
 
 ## References
 
-1. **Sean Ellis PMF Methodology**: Ellis, S. (2010). "The Startup Pyramid"
-2. **Synthetic Personas**: Smith, J. et al. (2023). "LLM-Generated Personas for Market Research"
-3. **Self-Refine**: Madaan, A. et al. (2023). "Self-Refine: Iterative Refinement with Self-Feedback"
-4. **NPS Standard**: Reichheld, F. (2003). "The One Number You Need to Grow"
+1. **Sean Ellis PMF Methodology**: 
+   - Ellis, S. (2010). "The Startup Pyramid" - https://www.startup-marketing.com/the-startup-pyramid/
+   - Ellis, S. (2017). "Hacking Growth: How Today's Fastest-Growing Companies Drive Breakout Success"
+
+2. **LLM-Based Synthetic Personas**: 
+   - Argyle, L. P., et al. (2023). "Out of One, Many: Using Language Models to Simulate Human Samples" *Political Analysis*, 31(3), 337-351. DOI: 10.1017/pan.2023.2
+   - Park, J. S., et al. (2023). "Generative Agents: Interactive Simulacra of Human Behavior" *arXiv preprint* arXiv:2304.03442
+   - Dillion, D., et al. (2023). "Can AI language models replace human participants?" *Trends in Cognitive Sciences*, 27(7), 597-600
+
+3. **Self-Refine and Iterative Improvement**: 
+   - Madaan, A., et al. (2023). "Self-Refine: Iterative Refinement with Self-Feedback" *arXiv preprint* arXiv:2303.17651
+   - Bai, Y., et al. (2022). "Constitutional AI: Harmlessness from AI Feedback" *arXiv preprint* arXiv:2212.08073
+
+4. **Net Promoter Score**: 
+   - Reichheld, F. F. (2003). "The One Number You Need to Grow" *Harvard Business Review*, 81(12), 46-55
+
+5. **Big Five Personality Model**: 
+   - McCrae, R. R., & Costa, P. T. (1987). "Validation of the five-factor model of personality across instruments and observers" *Journal of Personality and Social Psychology*, 52(1), 81-90
+
+6. **Product-Market Fit Analysis**:
+   - Rachleff, A. (2007). "The Only Thing That Matters" - Wealthfront blog series on PMF
+   - Andreessen, M. (2007). "The only thing that matters" - pmarchive.com blog post
 
 ## Updates
 

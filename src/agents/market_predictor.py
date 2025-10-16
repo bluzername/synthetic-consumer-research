@@ -140,19 +140,35 @@ class MarketPredictorAgent:
         threshold: float = 40.0
     ) -> MarketFitScore:
         """
-        Calculate Product-Market Fit score using Sean Ellis methodology.
+        Calculate Product-Market Fit score using enhanced methodology.
+        
+        Traditional Sean Ellis PMF (40% "very disappointed") is included for reference,
+        but enhanced metrics prioritize superfan identification and market segmentation.
+        
+        KEY INSIGHT: For early-stage concepts, 10%+ superfans (5/5 interest + VERY disappointed)
+        is more meaningful than 40% lukewarm interest. Many successful products (Tesla, Peloton,
+        Notion) started as niche products with passionate superfans before achieving mass market appeal.
         
         Args:
             responses: List of persona responses
-            threshold: PMF threshold percentage
+            threshold: Traditional PMF threshold percentage (kept for comparison)
         
         Returns:
-            MarketFitScore object
+            MarketFitScore object with enhanced metrics
         """
-        if not responses:
-            raise ValueError("No responses to calculate PMF from")
+        from ..utils.exceptions import InsufficientDataError
         
-        self.logger.log_agent_start("Market Predictor", "Calculating PMF score")
+        if not responses:
+            raise InsufficientDataError(required=10, actual=0)
+        
+        if len(responses) < 10:
+            self.logger.log_warning(
+                f"Only {len(responses)} responses available. "
+                f"Results may not be statistically reliable. "
+                f"Recommended: 50-100 responses for robust PMF calculation."
+            )
+        
+        self.logger.log_agent_start("Market Predictor", "Calculating PMF score with enhanced metrics")
         
         total = len(responses)
         
@@ -211,28 +227,36 @@ class MarketPredictorAgent:
         concern_counter = Counter(all_concerns)
         top_concerns = [concern for concern, _ in concern_counter.most_common(5)]
         
-        # 10. Business Model Recommendation
-        if superfan_ratio >= 0.10 and segmentation.enthusiasts_pct < 40:
-            business_model = "Premium/Niche: Target superfans with high-value offering ($20-50/mo or $200-500 one-time)"
-        elif superfan_ratio >= 0.10 and segmentation.enthusiasts_pct >= 40:
-            business_model = "Freemium/Mass Market: Wide adoption with premium upsells ($0-10/mo free, $15-30/mo premium)"
+        # 10. Business Model Recommendation (based on market segmentation)
+        if superfan_ratio >= 0.15:  # High superfan concentration
+            if segmentation.enthusiasts_pct >= 40:
+                business_model = "Freemium/Mass Market: Wide adoption with premium tier for superfans. Example: Spotify (free tier + premium). Pricing: $0 free, $15-30/mo premium"
+            else:
+                business_model = "Premium/Niche: Target superfans willing to pay premium. Example: high-end audio, professional tools. Pricing: $30-100/mo or $300-1000 one-time"
+        elif superfan_ratio >= 0.10:  # Viable niche
+            if segmentation.enthusiasts_pct >= 40:
+                business_model = "Value-Based Pricing: Broad appeal with tiered pricing. Example: Notion, Figma. Pricing: $0-15/mo free, $20-40/mo pro"
+            else:
+                business_model = "Premium/Community: Target niche with strong community. Example: Peloton, CrossFit. Pricing: $20-50/mo or $200-500 one-time"
         elif segmentation.enthusiasts_pct >= 30:
-            business_model = "Mid-Market: Balance accessibility and value ($10-20/mo)"
+            business_model = "Mid-Market/SaaS: Balance accessibility and value. Example: most B2B SaaS. Pricing: $10-30/mo per user"
         else:
-            business_model = "Needs refinement: No clear monetization path yet"
+            business_model = "Needs refinement: Insufficient market enthusiasm for clear monetization strategy. Iterate to create passionate advocates first."
         
-        # 11. Strategic Recommendation (enhanced)
+        # 11. Strategic Recommendation (enhanced - uses superfan ratio as PRIMARY metric)
+        # NOTE: Traditional 40% PMF threshold is often unrealistic for early-stage concepts
+        # Focus on superfan identification (10%+ with 5/5 interest) instead
         if superfan_ratio >= 0.10:
             if segmentation.enthusiasts_pct >= 40:
-                recommendation = "✅ PROCEED (MASS MARKET): Strong core + broad appeal - scale aggressively"
+                recommendation = "✅ PROCEED (MASS MARKET): Strong core (10%+ superfans) + broad appeal (40%+ enthusiasts) - scale aggressively. This is exceptional for early-stage."
             else:
-                recommendation = "✅ PROCEED (NICHE): Viable superfan segment - nail the niche first"
+                recommendation = "✅ PROCEED (NICHE): Viable superfan segment (10%+) - nail the niche first, expand later. Many successful products started here (Tesla, Peloton)."
         elif segmentation.enthusiasts_pct >= 30:
-            recommendation = "⚠️ REFINE: Moderate interest but needs passion - iterate value prop"
+            recommendation = "⚠️ REFINE: Moderate interest (30%+ enthusiasts) but no superfans yet - iterate value prop to create passionate advocates"
         elif segmentation.interested_pct >= 50:
-            recommendation = "⚠️ REFINE: Lukewarm response - strengthen differentiation"
+            recommendation = "⚠️ REFINE: Lukewarm response (50%+ mildly interested) - strengthen differentiation to convert interest into enthusiasm"
         else:
-            recommendation = "❌ PIVOT: Weak fit - consider major changes or new market"
+            recommendation = "❌ PIVOT: Weak market fit - consider major changes, different positioning, or new target market"
         
         market_fit = MarketFitScore(
             pmf_score=pmf_score,
