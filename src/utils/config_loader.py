@@ -47,19 +47,81 @@ class Config:
             raise ValueError(f"Invalid YAML in {path}: {e}")
     
     def _validate(self):
-        """Validate required configuration fields."""
+        """Validate required configuration fields and values."""
+        from .exceptions import ConfigurationError, AuthenticationError
+        
         # Check for OpenRouter API key
-        if not os.getenv("OPENROUTER_API_KEY"):
-            raise ValueError(
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise AuthenticationError(
                 "OPENROUTER_API_KEY not found in environment variables. "
-                "Please set it in your .env file."
+                "Please create a .env file with your API key. "
+                "Get a key at: https://openrouter.ai/keys"
+            )
+        
+        # Validate API key format
+        if not api_key.startswith("sk-or-v1-"):
+            raise AuthenticationError(
+                "OPENROUTER_API_KEY appears to be invalid. "
+                "OpenRouter keys should start with 'sk-or-v1-'. "
+                "Please check your .env file."
             )
         
         # Validate required settings sections
         required_sections = ["models", "workflow", "social_media"]
         for section in required_sections:
             if section not in self.settings:
-                raise ValueError(f"Missing required configuration section: {section}")
+                raise ConfigurationError(f"Missing required configuration section: {section}")
+        
+        # Validate workflow parameters
+        workflow = self.settings.get("workflow", {})
+        
+        max_iterations = workflow.get("max_iterations", 5)
+        if not isinstance(max_iterations, int) or max_iterations < 1:
+            raise ConfigurationError(
+                f"workflow.max_iterations must be a positive integer, got: {max_iterations}"
+            )
+        if max_iterations > 10:
+            raise ConfigurationError(
+                f"workflow.max_iterations is set to {max_iterations}. "
+                f"Values > 10 may be expensive and have diminishing returns. "
+                f"Recommended: 3-5"
+            )
+        
+        pmf_threshold = workflow.get("pmf_threshold", 40.0)
+        if not isinstance(pmf_threshold, (int, float)) or pmf_threshold < 0 or pmf_threshold > 100:
+            raise ConfigurationError(
+                f"workflow.pmf_threshold must be between 0 and 100, got: {pmf_threshold}"
+            )
+        
+        personas_count = workflow.get("personas_count", 100)
+        if not isinstance(personas_count, int) or personas_count < 10:
+            raise ConfigurationError(
+                f"workflow.personas_count must be at least 10 for statistical validity, got: {personas_count}. "
+                f"Recommended: 50-100 for reliable results."
+            )
+        if personas_count > 500:
+            raise ConfigurationError(
+                f"workflow.personas_count is set to {personas_count}. "
+                f"Values > 500 may be very expensive and slow. "
+                f"Are you sure you want this many personas?"
+            )
+        
+        # Validate model names exist
+        models = self.settings.get("models", {})
+        required_models = ["ideator", "market_predictor", "critic", "persona_generator"]
+        for model_key in required_models:
+            if not models.get(model_key):
+                raise ConfigurationError(
+                    f"Missing required model configuration: models.{model_key}"
+                )
+        
+        # Validate temperature values
+        ideator_temp = models.get("ideator_temperature", 0.7)
+        if not isinstance(ideator_temp, (int, float)) or ideator_temp < 0 or ideator_temp > 2:
+            raise ConfigurationError(
+                f"models.ideator_temperature must be between 0 and 2, got: {ideator_temp}"
+            )
     
     # Model configurations
     @property

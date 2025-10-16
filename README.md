@@ -4,6 +4,11 @@
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/yourusername/product-ideation-system/workflows/CI/badge.svg)](https://github.com/yourusername/product-ideation-system/actions)
+[![Code Style](https://img.shields.io/badge/code%20style-PEP%208-blue)](https://www.python.org/dev/peps/pep-0008/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Documentation](https://img.shields.io/badge/docs-comprehensive-green.svg)](docs/README.md)
+[![OpenRouter](https://img.shields.io/badge/API-OpenRouter-orange.svg)](https://openrouter.ai/)
 
 ## What Is This?
 

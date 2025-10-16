@@ -103,18 +103,24 @@ class MarketSegmentation(BaseModel):
 
 
 class MarketFitScore(BaseModel):
-    """Product-Market Fit analysis results with enhanced metrics."""
+    """Product-Market Fit analysis results with enhanced metrics.
+    
+    Enhanced metrics prioritize superfan identification and market segmentation
+    over traditional 40% PMF threshold, which is often unrealistic for early-stage concepts.
+    
+    Key insight: 10%+ superfans = viable niche product (more important than 40% lukewarm interest)
+    """
     # Core metrics
-    pmf_score: float = Field(description="% very disappointed (Sean Ellis - for comparison)")
-    avg_interest: float = Field(description="Average interest score")
-    nps: int = Field(description="Net Promoter Score")
+    pmf_score: float = Field(description="% very disappointed (Sean Ellis - for comparison, but see superfan_ratio for better early-stage metric)")
+    avg_interest: float = Field(description="Average interest score (1-5)")
+    nps: int = Field(description="Net Promoter Score (-100 to +100)")
     
-    # Enhanced segmentation
-    segmentation: MarketSegmentation = Field(description="Detailed market segments")
+    # Enhanced segmentation (PRIMARY METRICS for early-stage validation)
+    segmentation: MarketSegmentation = Field(description="Detailed market segments - use this for strategic decisions")
     
-    # Target market viability
-    target_market_size_pct: float = Field(description="% who are target market (superfans + enthusiasts)")
-    superfan_ratio: float = Field(description="Ratio of superfans to total (viability indicator)")
+    # Target market viability (KEY METRICS)
+    target_market_size_pct: float = Field(description="% who are target market (superfans + enthusiasts) - aim for 25%+")
+    superfan_ratio: float = Field(description="Ratio of superfans to total (PRIMARY VIABILITY INDICATOR: ≥0.10 = viable niche)")
     
     # Interest distribution (for visualization)
     interest_distribution: Dict[int, int] = Field(description="Count by interest level 1-5")
@@ -122,8 +128,8 @@ class MarketFitScore(BaseModel):
     # Strategic insights
     top_benefits: List[str] = Field(description="Most mentioned benefits")
     top_concerns: List[str] = Field(description="Most mentioned concerns")
-    recommendation: str = Field(description="Strategic recommendation")
-    business_model_fit: str = Field(description="Suggested business model based on segments")
+    recommendation: str = Field(description="Strategic recommendation based on enhanced metrics")
+    business_model_fit: str = Field(description="Suggested business model based on market segments")
     total_responses: int = Field(description="Number of personas surveyed")
     
     def meets_threshold(self, threshold: float = 40.0) -> bool:
@@ -152,7 +158,11 @@ class MarketFitScore(BaseModel):
                 return "PIVOT: Weak market fit - consider major changes or new market"
     
     def get_rating(self) -> str:
-        """Get qualitative rating based on multiple factors."""
+        """Get qualitative rating based on multiple factors.
+        
+        Uses enhanced metrics that prioritize superfan identification over
+        traditional PMF threshold, which is often unrealistic for concepts.
+        """
         if self.is_viable_mass_market():
             return "EXCELLENT (MASS MARKET)"
         elif self.is_viable_niche():
@@ -161,6 +171,33 @@ class MarketFitScore(BaseModel):
             return "FAIR (NEEDS REFINEMENT)"
         else:
             return "POOR (PIVOT NEEDED)"
+    
+    def get_viability_summary(self) -> Dict[str, Any]:
+        """Get comprehensive viability summary with key metrics.
+        
+        Returns all critical metrics for decision-making in one place.
+        """
+        return {
+            "viable": self.is_viable_niche() or self.is_viable_mass_market(),
+            "rating": self.get_rating(),
+            "superfan_ratio": f"{self.superfan_ratio:.1%}",
+            "target_market_size": f"{self.target_market_size_pct:.1f}%",
+            "strategy": self.get_market_strategy(),
+            "business_model": self.business_model_fit,
+            "key_strength": self.top_benefits[0] if self.top_benefits else "N/A",
+            "key_concern": self.top_concerns[0] if self.top_concerns else "N/A",
+            "meets_traditional_pmf": self.meets_threshold(40.0),
+            "pmf_score": f"{self.pmf_score:.1f}%",
+            "nps": self.nps,
+        }
+    
+    def should_proceed(self) -> bool:
+        """Determine if concept should proceed to development.
+        
+        Uses enhanced criteria: viable if 10%+ superfans OR 40%+ enthusiasts,
+        regardless of traditional 40% PMF threshold.
+        """
+        return self.is_viable_niche() or self.is_viable_mass_market()
 
 
 class CriticFeedback(BaseModel):
