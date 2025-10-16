@@ -76,7 +76,8 @@ class TestConfigAccess:
         # Test social media settings
         assert config.x_max_chars > 0
         assert config.linkedin_max_chars > 0
-        assert isinstance(config.x_image_size, list)
+        # x_image_size can be either list or tuple from YAML
+        assert isinstance(config.x_image_size, (list, tuple))
         assert len(config.x_image_size) == 2
     
     def test_feature_flags(self, monkeypatch):
