@@ -17,11 +17,13 @@ class OpenRouterClient:
     
     def __init__(self):
         """Initialize OpenRouter client."""
+        from .exceptions import AuthenticationError
+        
         self.config = get_config()
         self.api_key = os.getenv("OPENROUTER_API_KEY")
         
         if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY not found in environment")
+            raise AuthenticationError()
         
         # Initialize OpenAI client pointing to OpenRouter
         self.client = OpenAI(
@@ -144,6 +146,8 @@ class OpenRouterClient:
             return response
         
         except Exception as e:
+            from .exceptions import RateLimitError, AuthenticationError, ModelNotFoundError, APIError
+            
             # Log failed call
             self._log_call(
                 model=model,
@@ -151,7 +155,22 @@ class OpenRouterClient:
                 success=False,
                 error_message=str(e),
             )
-            raise
+            
+            # Provide helpful error messages
+            error_str = str(e).lower()
+            if "rate" in error_str and "limit" in error_str:
+                raise RateLimitError() from e
+            elif "auth" in error_str or "unauthorized" in error_str or "401" in error_str:
+                raise AuthenticationError() from e
+            elif "not found" in error_str or "404" in error_str:
+                raise ModelNotFoundError(model) from e
+            elif "timeout" in error_str:
+                raise APIError(
+                    f"Request timeout for model {model}. "
+                    f"Try increasing 'api.timeout' in config/settings.yaml or use a faster model."
+                ) from e
+            else:
+                raise APIError(f"API call failed: {str(e)}") from e
     
     def chat_completion_with_structured_output(
         self,
@@ -267,6 +286,8 @@ class OpenRouterClient:
             return urls
         
         except Exception as e:
+            from .exceptions import ImageGenerationError
+            
             # Log failed call
             self._log_call(
                 model=model,
@@ -275,8 +296,11 @@ class OpenRouterClient:
                 error_message=str(e),
             )
             
-            # Return empty list instead of raising to allow graceful degradation
+            # Provide helpful error message
             print(f"Image generation failed: {e}")
+            print("Tip: You can disable image generation in config/settings.yaml: features.enable_image_generation = false")
+            
+            # Return empty list instead of raising to allow graceful degradation
             return []
     
     def _extract_image_urls_from_markdown(self, content: str) -> List[str]:

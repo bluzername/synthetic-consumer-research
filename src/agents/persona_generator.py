@@ -75,8 +75,17 @@ class PersonaGenerator:
                 self.logger.log_warning(f"Batch failed ({failed_batches}/{max_failed_batches})")
                 
                 if failed_batches >= max_failed_batches:
+                    from ..utils.exceptions import PersonaGenerationError
                     self.logger.log_error(f"Failed to generate personas after {max_failed_batches} attempts. Check prompt formatting.")
-                    break
+                    raise PersonaGenerationError(
+                        f"Failed to generate personas after {max_failed_batches} attempts. "
+                        f"Successfully generated {len(personas)} personas before failures. "
+                        f"This may be due to:\n"
+                        f"  1. Model not supporting structured JSON output reliably\n"
+                        f"  2. Rate limiting or API timeouts\n"
+                        f"  3. Prompt complexity issues\n"
+                        f"Try: Using a different model (e.g., 'google/gemini-2.5-flash') or reducing batch size."
+                    )
             else:
                 failed_batches = 0  # Reset counter on success
             
