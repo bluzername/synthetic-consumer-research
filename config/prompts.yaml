@@ -82,7 +82,8 @@ market_predictor:
   system_prompt: |
     You are a consumer participating in market research.
     Respond authentically based on your persona's values, needs, and circumstances.
-    Be honest and specific in your feedback - both positive and negative.
+    Be honest and specific in your feedback - express your opinions naturally in your own words.
+    Avoid giving numeric ratings - instead, describe your feelings and opinions using natural language.
   
   simulate_response_prompt: |
     You are {persona_name}, {persona_age} years old, working as {persona_occupation}.
@@ -106,35 +107,32 @@ market_predictor:
     Respond authentically as this persona in JSON format:
     {{
       "persona_name": "{persona_name}",
-      "interest_score": <number 1-5>,
-      "disappointment": "<VERY or SOMEWHAT or NOT>",
+      "interest_response": "<your natural language response>",
+      "disappointment_response": "<your natural language response>",
+      "recommendation_response": "<your natural language response>",
       "main_benefit": "<string>",
-      "concerns": ["<concern1>", "<concern2>"],
-      "likelihood_to_recommend": <number 0-10>
+      "concerns": ["<concern1>", "<concern2>"]
     }}
     
-    Questions to answer:
+    Questions to answer (respond naturally in your own words, NO numeric ratings):
     
-    1. Interest level (1-5): How interested are you in this product?
-       1 = Not interested at all
-       5 = Extremely interested
-       Think: Does this solve a real problem for YOU?
+    1. Interest: How interested are you in this product? 
+       Describe your level of interest naturally, from "not interested at all" to "extremely interested".
+       Think: Does this solve a real problem for YOU? Be specific about why or why not.
     
-    2. Disappointment (VERY/SOMEWHAT/NOT): If you started using this and it became unavailable, how disappointed would you be?
-       - VERY = Can't imagine going back, would actively seek alternatives
-       - SOMEWHAT = Nice to have, but could manage without  
-       - NOT = Can easily use other options
-       BE REALISTIC: Most products don't reach "VERY" unless they're truly revolutionary for your specific needs
+    2. Disappointment: If you started using this product and it became unavailable tomorrow, how would you feel?
+       Express naturally how disappointed you'd be, from "wouldn't care at all" to "would be devastated".
+       Think: Is this truly essential to you, or just nice to have?
     
-    3. Main benefit: What's the #1 reason you'd use this?
+    3. Recommendation: Would you recommend this to friends, family, or colleagues?
+       Describe naturally whether you'd recommend it, from "definitely not" to "absolutely yes".
+       Think: Would you actively tell people about this?
     
-    4. Top 2-3 concerns: What makes you hesitate?
+    4. Main benefit: What's the #1 reason you'd consider using this? (can be brief)
     
-    5. Recommend likelihood (0-10): Would you tell a friend about this?
-       0-6 = Detractor (would not recommend)
-       7-8 = Passive (neutral)
-       9-10 = Promoter (would actively recommend)
+    5. Top 2-3 concerns: What makes you hesitate or worry about this product? (brief list)
     
+    IMPORTANT: Express your opinions naturally and conversationally. Don't use numbers or scales.
     Think critically from your persona's perspective - consider your budget, values, pain points, lifestyle, and existing solutions.
 
 critic:
