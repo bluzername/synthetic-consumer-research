@@ -4,6 +4,7 @@ from typing import Dict, List
 from pathlib import Path
 from datetime import datetime
 import json
+from collections import Counter
 
 from ..utils import (
     get_config,
@@ -13,6 +14,7 @@ from ..utils import (
     MarketFitScore,
     WorkflowState,
     OutputPackage,
+    Persona,
 )
 from ..visualization import ImageGenerator, InfographicGenerator
 from .x_composer import XComposer
@@ -297,6 +299,12 @@ class AssetBundler:
         self.file_manager.save_json(personas_data, personas_path)
         analytics_files.append(str(personas_path))
         
+        # Save persona distribution analytics
+        distribution_path = output_dir / "analytics" / "persona_distribution.json"
+        distribution_analytics = self._calculate_persona_distribution(workflow_state["personas"])
+        self.file_manager.save_json(distribution_analytics, distribution_path)
+        analytics_files.append(str(distribution_path))
+        
         # Save persona responses for debugging
         responses_path = output_dir / "analytics" / "persona_responses.json"
         responses_data = [
@@ -371,4 +379,108 @@ class AssetBundler:
         
         guide_path = output_dir / "POSTING_GUIDE.md"
         self.file_manager.save_text(guide_content, guide_path)
+    
+    def _calculate_persona_distribution(self, personas: List[Persona]) -> Dict:
+        """Calculate demographic distribution analytics for personas."""
+        total = len(personas)
+        
+        # Age distribution
+        def get_age_bracket(age: int) -> str:
+            if 18 <= age <= 24: return "18-24"
+            elif 25 <= age <= 34: return "25-34"
+            elif 35 <= age <= 44: return "35-44"
+            elif 45 <= age <= 54: return "45-54"
+            elif 55 <= age <= 64: return "55-64"
+            elif 65 <= age <= 74: return "65-74"
+            else: return "75-85"
+        
+        age_dist = Counter([get_age_bracket(p.age) for p in personas])
+        income_dist = Counter([p.income_bracket for p in personas])
+        location_dist = Counter([p.location_type for p in personas])
+        tech_dist = Counter([p.tech_savviness for p in personas])
+        occupation_dist = Counter([p.occupation for p in personas])
+        
+        # Load target distributions for comparison
+        try:
+            targets = {
+                "age_brackets": self.config.get_setting("persona_generation", "distributions", "age_brackets", default={}),
+                "income_levels": self.config.get_setting("persona_generation", "distributions", "income_levels", default={}),
+                "location_types": self.config.get_setting("persona_generation", "distributions", "location_types", default={}),
+                "tech_savviness_levels": self.config.get_setting("persona_generation", "distributions", "tech_savviness_levels", default={})
+            }
+        except:
+            targets = {}
+        
+        return {
+            "total_personas": total,
+            "distributions": {
+                "age": {
+                    "actual": {k: round((v/total)*100, 1) for k, v in age_dist.items()},
+                    "target": targets.get("age_brackets", {}),
+                    "counts": dict(age_dist)
+                },
+                "income": {
+                    "actual": {k: round((v/total)*100, 1) for k, v in income_dist.items()},
+                    "target": targets.get("income_levels", {}),
+                    "counts": dict(income_dist)
+                },
+                "location": {
+                    "actual": {k: round((v/total)*100, 1) for k, v in location_dist.items()},
+                    "target": targets.get("location_types", {}),
+                    "counts": dict(location_dist)
+                },
+                "tech_savviness": {
+                    "actual": {k: round((v/total)*100, 1) for k, v in tech_dist.items()},
+                    "target": targets.get("tech_savviness_levels", {}),
+                    "counts": dict(tech_dist)
+                },
+                "occupation": {
+                    "counts": dict(occupation_dist.most_common(10)),
+                    "unique_count": len(occupation_dist)
+                }
+            },
+            "coverage": {
+                "age_brackets": len(age_dist),
+                "income_levels": len(income_dist),
+                "locations": len(location_dist),
+                "tech_levels": len(tech_dist),
+                "occupations": len(occupation_dist)
+            },
+            "diversity_score": self._calculate_diversity_score(age_dist, income_dist, location_dist, tech_dist, total)
+        }
+    
+    def _calculate_diversity_score(self, age_dist: Counter, income_dist: Counter, 
+                                   location_dist: Counter, tech_dist: Counter, total: int) -> float:
+        """Calculate overall diversity score (0-100)."""
+        # Higher score = more diverse (more even distribution)
+        # Use Shannon entropy as diversity measure
+        import math
+        
+        def entropy(dist: Counter, total: int) -> float:
+            if total == 0: return 0
+            probs = [count/total for count in dist.values()]
+            return -sum(p * math.log2(p) if p > 0 else 0 for p in probs)
+        
+        # Calculate entropy for each dimension
+        age_entropy = entropy(age_dist, total)
+        income_entropy = entropy(income_dist, total)
+        location_entropy = entropy(location_dist, total)
+        tech_entropy = entropy(tech_dist, total)
+        
+        # Max possible entropy for each (log2 of number of categories)
+        max_age_entropy = math.log2(7)  # 7 age brackets
+        max_income_entropy = math.log2(5)  # 5 income levels
+        max_location_entropy = math.log2(3)  # 3 location types
+        max_tech_entropy = math.log2(5)  # 5 tech levels
+        
+        # Normalized entropy (0-1) for each dimension
+        age_score = age_entropy / max_age_entropy if max_age_entropy > 0 else 0
+        income_score = income_entropy / max_income_entropy if max_income_entropy > 0 else 0
+        location_score = location_entropy / max_location_entropy if max_location_entropy > 0 else 0
+        tech_score = tech_entropy / max_tech_entropy if max_tech_entropy > 0 else 0
+        
+        # Average across dimensions, scale to 0-100
+        overall_score = ((age_score + income_score + location_score + tech_score) / 4) * 100
+        
+        return round(overall_score, 1)
 
