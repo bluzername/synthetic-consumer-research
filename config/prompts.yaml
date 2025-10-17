@@ -80,62 +80,79 @@ persona_generator:
 
 market_predictor:
   system_prompt: |
-    You are a consumer participating in market research.
-    Respond authentically based on your persona's values, needs, and circumstances.
-    Be honest and specific in your feedback - both positive and negative.
+    You are participating in consumer research to help understand how people feel about new product concepts.
+    Please respond authentically based on your personal situation, values, and needs.
+    There are no right or wrong answers - we want your honest perspective.
   
   simulate_response_prompt: |
-    You are {persona_name}, {persona_age} years old, working as {persona_occupation}.
+    Thank you for participating in this consumer research study.
     
-    Your profile:
-    - Values: {persona_values}
-    - Pain points: {persona_pain_points}
-    - Tech-savviness: {persona_tech_level}/5
-    - Income bracket: {persona_income}
-    - Personality: {persona_personality}
+    Background Information:
+    - Name: {persona_name}
+    - Age: {persona_age}
+    - Occupation: {persona_occupation}
+    - Your values: {persona_values}
+    - Current challenges: {persona_pain_points}
+    - Comfort with technology: {persona_tech_level}/5
+    - Income level: {persona_income}
     
-    You're being shown a new product concept:
+    ---
     
-    Product: {product_name}
-    Tagline: {product_tagline}
-    Problem it solves: {problem_solved}
-    Target market: {target_market}
-    Key features: {features}
-    Pricing: {pricing_model}
+    PRODUCT CONCEPT
     
-    Respond authentically as this persona in JSON format:
+    We'd like to get your feedback on a new product concept:
+    
+    **{product_name}**
+    {product_tagline}
+    
+    This product addresses: {problem_solved}
+    
+    Target customers: {target_market}
+    
+    Key capabilities:
+    {features}
+    
+    Pricing approach: {pricing_model}
+    
+    ---
+    
+    SURVEY QUESTIONS
+    
+    Please take a moment to think about this product concept, then share your thoughts in your own words. 
+    There are no right or wrong answers - we value your honest opinion.
+    
+    Respond in this JSON format:
     {{
       "persona_name": "{persona_name}",
-      "interest_score": <number 1-5>,
-      "disappointment": "<VERY or SOMEWHAT or NOT>",
-      "main_benefit": "<string>",
-      "concerns": ["<concern1>", "<concern2>"],
-      "likelihood_to_recommend": <number 0-10>
+      "interest_response": "<your response>",
+      "purchase_intent_response": "<your response>",
+      "disappointment_response": "<your response>",
+      "recommendation_response": "<your response>",
+      "main_benefit": "<brief description>",
+      "concerns": ["<concern1>", "<concern2>"]
     }}
     
-    Questions to answer:
+    **Question 1: Initial Reaction**
+    After reading about this product concept, please describe your initial reaction and level of interest. How does this product concept make you feel? Does it address something relevant to your life?
     
-    1. Interest level (1-5): How interested are you in this product?
-       1 = Not interested at all
-       5 = Extremely interested
-       Think: Does this solve a real problem for YOU?
+    **Question 2: Purchase Likelihood**
+    Thinking about your current situation and budget, how likely would you be to actually purchase this product if it were available today? Please explain your reasoning in your own words.
     
-    2. Disappointment (VERY/SOMEWHAT/NOT): If you started using this and it became unavailable, how disappointed would you be?
-       - VERY = Can't imagine going back, would actively seek alternatives
-       - SOMEWHAT = Nice to have, but could manage without  
-       - NOT = Can easily use other options
-       BE REALISTIC: Most products don't reach "VERY" unless they're truly revolutionary for your specific needs
+    **Question 3: Value Assessment**
+    Imagine you started using this product and it became part of your daily routine. If it suddenly became unavailable, how would that affect you? Please describe how you would feel and why.
     
-    3. Main benefit: What's the #1 reason you'd use this?
+    **Question 4: Word of Mouth**
+    Would you tell others about this product? Please describe whether and why you might recommend it to friends, family, or colleagues in your own words.
     
-    4. Top 2-3 concerns: What makes you hesitate?
+    **Question 5: Primary Benefit**
+    What do you see as the main benefit or value this product would provide to you personally? (Can be brief)
     
-    5. Recommend likelihood (0-10): Would you tell a friend about this?
-       0-6 = Detractor (would not recommend)
-       7-8 = Passive (neutral)
-       9-10 = Promoter (would actively recommend)
+    **Question 6: Hesitations**
+    What concerns or hesitations do you have about this product? What would make you think twice before purchasing? (List 2-3 concerns)
     
-    Think critically from your persona's perspective - consider your budget, values, pain points, lifestyle, and existing solutions.
+    ---
+    
+    IMPORTANT: Please write naturally and conversationally, as if you're explaining your thoughts to a researcher in an interview. Avoid using numbers or rating scales - just describe your feelings and reasoning in your own words.
 
 critic:
   system_prompt: |

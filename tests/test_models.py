@@ -8,7 +8,6 @@ from src.utils.models import (
     MarketFitScore,
     MarketSegmentation,
     CriticFeedback,
-    DisappointmentLevel,
 )
 
 
@@ -132,63 +131,58 @@ class TestPersona:
 
 
 class TestPersonaResponse:
-    """Tests for PersonaResponse model."""
+    """Tests for PersonaResponse model with SSR methodology."""
     
     def test_create_valid_response(self):
-        """Test creating a valid persona response."""
+        """Test creating a valid persona response with natural language."""
         response = PersonaResponse(
             persona_name="Alice Johnson",
-            interest_score=4,
-            disappointment=DisappointmentLevel.SOMEWHAT,
+            interest_response="I'm quite interested in this product",
+            purchase_intent_response="I would probably purchase this",
+            disappointment_response="I would be somewhat disappointed if it went away",
+            recommendation_response="I would probably recommend it to friends",
             main_benefit="Helps me stay healthy",
-            concerns=["Price seems high", "Battery life unclear"],
-            likelihood_to_recommend=7
+            concerns=["Price seems high", "Battery life unclear"]
         )
         
-        assert response.interest_score == 4
-        assert response.disappointment == DisappointmentLevel.SOMEWHAT
+        assert response.persona_name == "Alice Johnson"
+        assert "interested" in response.interest_response.lower()
+        assert "purchase" in response.purchase_intent_response.lower()
         assert len(response.concerns) == 2
     
-    def test_is_very_disappointed(self):
-        """Test very disappointed check."""
+    def test_natural_language_responses(self):
+        """Test that responses contain natural language text."""
         response = PersonaResponse(
             persona_name="Test",
-            interest_score=5,
-            disappointment=DisappointmentLevel.VERY,
-            main_benefit="Essential",
-            concerns=[],
-            likelihood_to_recommend=10
+            interest_response="I'm extremely interested and excited about this",
+            purchase_intent_response="I would definitely purchase this product",
+            disappointment_response="I would be devastated if this became unavailable",
+            recommendation_response="I would absolutely recommend this to everyone",
+            main_benefit="Essential feature",
+            concerns=[]
         )
         
-        assert response.is_very_disappointed() is True
+        # Verify natural language fields are strings
+        assert isinstance(response.interest_response, str)
+        assert isinstance(response.purchase_intent_response, str)
+        assert isinstance(response.disappointment_response, str)
+        assert isinstance(response.recommendation_response, str)
+        assert len(response.interest_response) > 0
     
-    def test_is_promoter(self):
-        """Test promoter identification."""
+    def test_qualitative_feedback(self):
+        """Test qualitative feedback fields."""
         response = PersonaResponse(
             persona_name="Test",
-            interest_score=5,
-            disappointment=DisappointmentLevel.VERY,
-            main_benefit="Great",
-            concerns=[],
-            likelihood_to_recommend=9
-        )
-        
-        assert response.is_promoter() is True
-        assert response.is_detractor() is False
-    
-    def test_is_detractor(self):
-        """Test detractor identification."""
-        response = PersonaResponse(
-            persona_name="Test",
-            interest_score=2,
-            disappointment=DisappointmentLevel.NOT,
+            interest_response="Not interested at all",
+            purchase_intent_response="I would never purchase this",
+            disappointment_response="Wouldn't care if it disappeared",
+            recommendation_response="Definitely would not recommend",
             main_benefit="Nothing special",
-            concerns=["Too expensive", "Unnecessary"],
-            likelihood_to_recommend=5
+            concerns=["Too expensive", "Unnecessary"]
         )
         
-        assert response.is_detractor() is True
-        assert response.is_promoter() is False
+        assert response.main_benefit == "Nothing special"
+        assert len(response.concerns) == 2
 
 
 class TestMarketSegmentation:

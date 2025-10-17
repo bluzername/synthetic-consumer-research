@@ -175,6 +175,22 @@ class Config:
         """Get number of personas to generate."""
         return self.settings["workflow"]["personas_count"]
     
+    # SSR (Semantic Similarity Rating) configurations
+    @property
+    def ssr_embedding_model(self) -> str:
+        """Get SSR embedding model."""
+        return self.get_setting("ssr", "embedding_model", default="all-mpnet-base-v2")
+    
+    @property
+    def ssr_temperature(self) -> float:
+        """Get SSR temperature parameter."""
+        return float(self.get_setting("ssr", "temperature", default=1.0))
+    
+    @property
+    def ssr_epsilon(self) -> float:
+        """Get SSR epsilon regularization parameter."""
+        return float(self.get_setting("ssr", "epsilon", default=0.01))
+    
     # Social media configurations
     @property
     def x_max_chars(self) -> int:

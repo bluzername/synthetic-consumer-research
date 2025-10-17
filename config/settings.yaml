@@ -106,6 +106,12 @@ logging:
   console_output: true
   rich_formatting: true
 
+# SSR (Semantic Similarity Rating) Configuration
+ssr:
+  embedding_model: "all-mpnet-base-v2"  # Larger, more accurate model than all-MiniLM-L6-v2
+  temperature: 1.0  # Controls distribution sharpness (lower = sharper, higher = more uniform)
+  epsilon: 0.01     # Regularization for smoothing (higher = more smoothing, prevents extreme values)
+
 # Feature flags
 features:
   enable_image_generation: true

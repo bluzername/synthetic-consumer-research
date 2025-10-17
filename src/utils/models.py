@@ -63,25 +63,23 @@ class Persona(BaseModel):
 
 
 class PersonaResponse(BaseModel):
-    """Market response from a single persona."""
+    """Market response from a single persona using SSR methodology.
+    
+    Instead of directly extracting Likert scores (which the paper advises against),
+    we capture natural language responses and later use Semantic Similarity Rating (SSR)
+    to convert them into probability distributions over the Likert scale.
+    """
     persona_name: str = Field(description="Which persona responded")
-    interest_score: int = Field(description="Interest level 1-5", ge=1, le=5)
-    disappointment: DisappointmentLevel = Field(description="Disappointment if unavailable")
+    
+    # Natural language responses (for SSR conversion)
+    interest_response: str = Field(description="Natural language response about interest level")
+    purchase_intent_response: str = Field(description="Natural language response about purchase likelihood")
+    disappointment_response: str = Field(description="Natural language response about disappointment if unavailable")
+    recommendation_response: str = Field(description="Natural language response about likelihood to recommend")
+    
+    # Qualitative feedback
     main_benefit: str = Field(description="Primary benefit they see")
     concerns: List[str] = Field(description="Top concerns/hesitations")
-    likelihood_to_recommend: int = Field(description="NPS score 0-10", ge=0, le=10)
-    
-    def is_very_disappointed(self) -> bool:
-        """Check if persona would be very disappointed."""
-        return self.disappointment == DisappointmentLevel.VERY
-    
-    def is_promoter(self) -> bool:
-        """Check if persona is a promoter (NPS 9-10)."""
-        return self.likelihood_to_recommend >= 9
-    
-    def is_detractor(self) -> bool:
-        """Check if persona is a detractor (NPS 0-6)."""
-        return self.likelihood_to_recommend <= 6
 
 
 class MarketSegmentation(BaseModel):
@@ -122,8 +120,8 @@ class MarketFitScore(BaseModel):
     target_market_size_pct: float = Field(description="% who are target market (superfans + enthusiasts) - aim for 25%+")
     superfan_ratio: float = Field(description="Ratio of superfans to total (PRIMARY VIABILITY INDICATOR: ≥0.10 = viable niche)")
     
-    # Interest distribution (for visualization)
-    interest_distribution: Dict[int, int] = Field(description="Count by interest level 1-5")
+    # Interest distribution (SSR probability distribution)
+    interest_distribution: Dict[int, float] = Field(description="Probability distribution over interest levels 1-5 (SSR methodology)")
     
     # Strategic insights
     top_benefits: List[str] = Field(description="Most mentioned benefits")

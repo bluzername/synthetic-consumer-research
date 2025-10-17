@@ -277,6 +277,43 @@ class AssetBundler:
         except Exception as e:
             self.logger.log_warning(f"Could not save cost summary: {e}")
         
+        # Save personas for debugging
+        personas_path = output_dir / "analytics" / "personas.json"
+        personas_data = [
+            {
+                "name": p.name,
+                "age": p.age,
+                "occupation": p.occupation,
+                "income_bracket": p.income_bracket,
+                "location_type": p.location_type,
+                "tech_savviness": p.tech_savviness,
+                "values": p.values,
+                "pain_points": p.pain_points,
+                "personality_traits": p.personality_traits,
+                "shopping_behavior": p.shopping_behavior
+            }
+            for p in workflow_state["personas"]
+        ]
+        self.file_manager.save_json(personas_data, personas_path)
+        analytics_files.append(str(personas_path))
+        
+        # Save persona responses for debugging
+        responses_path = output_dir / "analytics" / "persona_responses.json"
+        responses_data = [
+            {
+                "persona_name": r.persona_name,
+                "interest_response": r.interest_response,
+                "purchase_intent_response": r.purchase_intent_response,
+                "disappointment_response": r.disappointment_response,
+                "recommendation_response": r.recommendation_response,
+                "main_benefit": r.main_benefit,
+                "concerns": r.concerns
+            }
+            for r in workflow_state["persona_responses"]
+        ]
+        self.file_manager.save_json(responses_data, responses_path)
+        analytics_files.append(str(responses_path))
+        
         return analytics_files
     
     def _create_readme(self, workflow_state: WorkflowState, output_dir: Path):
