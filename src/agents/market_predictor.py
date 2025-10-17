@@ -1,8 +1,12 @@
-"""Market Predictor Agent - Simulate market response and calculate PMF."""
+"""Market Predictor Agent - Simulate market response and calculate PMF using SSR."""
 
 from typing import List
 import statistics
 from collections import Counter
+import numpy as np
+import polars as po
+from semantic_similarity_rating import ResponseRater
+
 from ..utils import (
     get_config,
     get_openrouter_client,
@@ -12,18 +16,20 @@ from ..utils import (
     PersonaResponse,
     MarketFitScore,
     MarketSegmentation,
-    DisappointmentLevel,
 )
 
 
 class MarketPredictorAgent:
     """
     Simulates market response by having personas evaluate product concepts.
-    Calculates Product-Market Fit using Sean Ellis methodology.
+    Calculates Product-Market Fit using SSR (Semantic Similarity Rating) methodology.
+    
+    This implementation follows the approach from:
+    "LLMs Reproduce Human Purchase Intent via Semantic Similarity Elicitation of Likert Ratings"
     """
     
     def __init__(self):
-        """Initialize Market Predictor agent."""
+        """Initialize Market Predictor agent with SSR."""
         self.config = get_config()
         self.client = get_openrouter_client()
         self.logger = get_logger()
@@ -35,6 +41,58 @@ class MarketPredictorAgent:
         # Load prompts
         self.system_prompt = self.config.get_prompt("market_predictor", "system_prompt")
         self.response_prompt_template = self.config.get_prompt("market_predictor", "simulate_response_prompt")
+        
+        # Initialize SSR raters with reference sentences for each dimension
+        self._initialize_ssr_raters()
+    
+    def _initialize_ssr_raters(self):
+        """Initialize SSR ResponseRater objects for each rating dimension."""
+        # Interest level (1-5 Likert scale)
+        interest_references = po.DataFrame({
+            "id": ["interest"] * 5,
+            "int_response": [1, 2, 3, 4, 5],
+            "sentence": [
+                "Not interested at all",  # 1
+                "Slightly interested",     # 2
+                "Moderately interested",   # 3
+                "Very interested",         # 4
+                "Extremely interested"     # 5
+            ]
+        })
+        
+        # Disappointment level (1-5 scale: NOT -> VERY)
+        disappointment_references = po.DataFrame({
+            "id": ["disappointment"] * 5,
+            "int_response": [1, 2, 3, 4, 5],
+            "sentence": [
+                "Wouldn't care at all",           # 1 (NOT disappointed)
+                "Slightly disappointed",           # 2
+                "Moderately disappointed",         # 3
+                "Very disappointed",               # 4
+                "Would be devastated"              # 5 (VERY disappointed)
+            ]
+        })
+        
+        # Recommendation likelihood (converted to 1-5 scale from NPS 0-10)
+        # We map: 0-2 -> 1, 3-4 -> 2, 5-6 -> 3, 7-8 -> 4, 9-10 -> 5
+        recommendation_references = po.DataFrame({
+            "id": ["recommendation"] * 5,
+            "int_response": [1, 2, 3, 4, 5],
+            "sentence": [
+                "Definitely would not recommend",  # 1 (NPS 0-2, detractor)
+                "Probably would not recommend",    # 2 (NPS 3-4, detractor)
+                "Might recommend",                 # 3 (NPS 5-6, detractor)
+                "Probably would recommend",        # 4 (NPS 7-8, passive)
+                "Absolutely would recommend"       # 5 (NPS 9-10, promoter)
+            ]
+        })
+        
+        # Initialize ResponseRater for each dimension
+        self.logger.log_info("Initializing SSR ResponseRaters...")
+        self.interest_rater = ResponseRater(interest_references, model_name="all-MiniLM-L6-v2")
+        self.disappointment_rater = ResponseRater(disappointment_references, model_name="all-MiniLM-L6-v2")
+        self.recommendation_rater = ResponseRater(recommendation_references, model_name="all-MiniLM-L6-v2")
+        self.logger.log_info("SSR ResponseRaters initialized successfully")
     
     def simulate_market_response(
         self,
@@ -140,17 +198,17 @@ class MarketPredictorAgent:
         threshold: float = 40.0
     ) -> MarketFitScore:
         """
-        Calculate Product-Market Fit score using enhanced methodology.
+        Calculate Product-Market Fit score using SSR (Semantic Similarity Rating) methodology.
         
-        Traditional Sean Ellis PMF (40% "very disappointed") is included for reference,
-        but enhanced metrics prioritize superfan identification and market segmentation.
+        This implements the approach from "LLMs Reproduce Human Purchase Intent via 
+        Semantic Similarity Elicitation of Likert Ratings" which converts natural language
+        responses into probability distributions over Likert scales using semantic similarity.
         
-        KEY INSIGHT: For early-stage concepts, 10%+ superfans (5/5 interest + VERY disappointed)
-        is more meaningful than 40% lukewarm interest. Many successful products (Tesla, Peloton,
-        Notion) started as niche products with passionate superfans before achieving mass market appeal.
+        Instead of extracting direct numeric ratings (which the paper advises against),
+        we use SSR to convert semantic responses into PMFs and then aggregate them.
         
         Args:
-            responses: List of persona responses
+            responses: List of persona responses with natural language
             threshold: Traditional PMF threshold percentage (kept for comparison)
         
         Returns:
@@ -168,45 +226,75 @@ class MarketPredictorAgent:
                 f"Recommended: 50-100 responses for robust PMF calculation."
             )
         
-        self.logger.log_agent_start("Market Predictor", "Calculating PMF score with enhanced metrics")
+        self.logger.log_agent_start("Market Predictor", "Calculating PMF score using SSR methodology")
         
         total = len(responses)
         
-        # 1. Traditional PMF Score: % "very disappointed" (Sean Ellis)
-        very_disappointed = sum(1 for r in responses if r.is_very_disappointed())
-        pmf_score = (very_disappointed / total) * 100
+        # Extract natural language responses for SSR processing
+        interest_texts = [r.interest_response for r in responses]
+        disappointment_texts = [r.disappointment_response for r in responses]
+        recommendation_texts = [r.recommendation_response for r in responses]
         
-        # 2. Net Promoter Score (NPS)
-        promoters = sum(1 for r in responses if r.is_promoter())
-        detractors = sum(1 for r in responses if r.is_detractor())
+        # Convert to PMFs using SSR
+        self.logger.log_info("Converting semantic responses to PMFs using SSR...")
+        interest_pmfs = self.interest_rater.get_response_pmfs(
+            "interest", interest_texts, temperature=1.0, epsilon=0.01
+        )
+        disappointment_pmfs = self.disappointment_rater.get_response_pmfs(
+            "disappointment", disappointment_texts, temperature=1.0, epsilon=0.01
+        )
+        recommendation_pmfs = self.recommendation_rater.get_response_pmfs(
+            "recommendation", recommendation_texts, temperature=1.0, epsilon=0.01
+        )
+        
+        # Calculate expected values and distributions from PMFs
+        # Interest: 1-5 scale directly
+        interest_scores = np.array([np.dot(pmf, [1, 2, 3, 4, 5]) for pmf in interest_pmfs])
+        avg_interest = float(np.mean(interest_scores))
+        
+        # Disappointment: 1-5 scale (1=NOT, 5=VERY)
+        disappointment_scores = np.array([np.dot(pmf, [1, 2, 3, 4, 5]) for pmf in disappointment_pmfs])
+        
+        # Recommendation: 1-5 scale, convert to NPS 0-10
+        # Map: 1->1, 2->3, 3->5, 4->7, 5->9 (midpoints of ranges)
+        recommendation_scores_1_5 = np.array([np.dot(pmf, [1, 2, 3, 4, 5]) for pmf in recommendation_pmfs])
+        nps_scores = (recommendation_scores_1_5 - 1) * 2.5  # Scale to 0-10
+        
+        # Calculate NPS (% promoters - % detractors)
+        promoters = sum(1 for score in nps_scores if score >= 9)
+        detractors = sum(1 for score in nps_scores if score <= 6)
         passives = total - promoters - detractors
         nps = int(((promoters - detractors) / total) * 100)
         
-        # 3. Average Interest
-        avg_interest = statistics.mean(r.interest_score for r in responses)
+        # Traditional PMF Score: % "very disappointed" (threshold >= 4.0 on disappointment scale)
+        # Use PMF to calculate probability of being "very disappointed" (scores 4-5)
+        very_disappointed_probs = disappointment_pmfs[:, 3:5].sum(axis=1)  # indices 3,4 = scores 4,5
+        pmf_score = float(np.mean(very_disappointed_probs) * 100)
         
-        # 4. Interest Distribution
-        interest_dist = {i: sum(1 for r in responses if r.interest_score == i) for i in range(1, 6)}
+        # Interest Distribution (aggregate PMFs to get count distribution)
+        interest_dist_array = interest_pmfs.sum(axis=0)
+        interest_dist = {i+1: int(round(interest_dist_array[i])) for i in range(5)}
         
-        # 5. Identify Superfans (5/5 interest + VERY disappointed)
-        superfans = sum(1 for r in responses if r.interest_score == 5 and r.is_very_disappointed())
+        # Identify Superfans: high interest (≥4.5) + high disappointment (≥4.0)
+        superfans = sum(1 for i, d in zip(interest_scores, disappointment_scores) if i >= 4.5 and d >= 4.0)
         superfan_ratio = superfans / total
         
-        # 6. Market Segmentation
-        enthusiasts = sum(1 for r in responses if r.interest_score >= 4)
-        interested = sum(1 for r in responses if r.interest_score == 3)
-        skeptical = sum(1 for r in responses if r.interest_score <= 2)
+        # Market Segmentation based on expected scores
+        enthusiasts = sum(1 for score in interest_scores if score >= 4.0)
+        interested = sum(1 for score in interest_scores if 2.5 <= score < 4.0)
+        skeptical = sum(1 for score in interest_scores if score < 2.5)
         
         # Disappointment distribution
-        somewhat_disappointed = sum(1 for r in responses if r.disappointment.value == "SOMEWHAT")
-        not_disappointed = sum(1 for r in responses if r.disappointment.value == "NOT")
+        very_disappointed_count = sum(1 for score in disappointment_scores if score >= 4.0)
+        somewhat_disappointed = sum(1 for score in disappointment_scores if 2.5 <= score < 4.0)
+        not_disappointed = sum(1 for score in disappointment_scores if score < 2.5)
         
         segmentation = MarketSegmentation(
             superfans_pct=(superfans / total) * 100,
             enthusiasts_pct=(enthusiasts / total) * 100,
             interested_pct=(interested / total) * 100,
             skeptical_pct=(skeptical / total) * 100,
-            very_disappointed_pct=(very_disappointed / total) * 100,
+            very_disappointed_pct=(very_disappointed_count / total) * 100,
             somewhat_disappointed_pct=(somewhat_disappointed / total) * 100,
             not_disappointed_pct=(not_disappointed / total) * 100,
             promoters_pct=(promoters / total) * 100,
@@ -214,7 +302,7 @@ class MarketPredictorAgent:
             detractors_pct=(detractors / total) * 100,
         )
         
-        # 7. Target Market Size (superfans + enthusiasts)
+        # Target Market Size (superfans + enthusiasts)
         target_market_size_pct = segmentation.superfans_pct + segmentation.enthusiasts_pct
         
         # 8. Top Benefits
@@ -243,9 +331,9 @@ class MarketPredictorAgent:
         else:
             business_model = "Needs refinement: Insufficient market enthusiasm for clear monetization strategy. Iterate to create passionate advocates first."
         
-        # 11. Strategic Recommendation (enhanced - uses superfan ratio as PRIMARY metric)
+        # Strategic Recommendation (enhanced - uses superfan ratio as PRIMARY metric)
         # NOTE: Traditional 40% PMF threshold is often unrealistic for early-stage concepts
-        # Focus on superfan identification (10%+ with 5/5 interest) instead
+        # Focus on superfan identification (10%+ with high interest + disappointment) instead
         if superfan_ratio >= 0.10:
             if segmentation.enthusiasts_pct >= 40:
                 recommendation = "✅ PROCEED (MASS MARKET): Strong core (10%+ superfans) + broad appeal (40%+ enthusiasts) - scale aggressively. This is exceptional for early-stage."
@@ -302,40 +390,19 @@ class MarketPredictorAgent:
         Returns:
             Formatted feedback string
         """
-        # Get mix of promoters and detractors
-        promoters = [r for r in responses if r.is_promoter()]
-        detractors = [r for r in responses if r.is_detractor()]
-        passives = [r for r in responses if not r.is_promoter() and not r.is_detractor()]
-        
-        samples = []
-        
-        # Add diverse samples
-        if promoters:
-            samples.append(promoters[0])
-        if detractors:
-            samples.extend(detractors[:2])
-        if passives:
-            samples.append(passives[0])
-        
-        # Fill remaining with random
-        remaining = num_samples - len(samples)
-        if remaining > 0 and len(responses) > len(samples):
-            for r in responses:
-                if r not in samples:
-                    samples.append(r)
-                    if len(samples) >= num_samples:
-                        break
+        # Just take a diverse sample of responses
+        samples = responses[:num_samples] if len(responses) >= num_samples else responses
         
         # Format feedback
         feedback_parts = []
-        for i, response in enumerate(samples[:num_samples], 1):
+        for i, response in enumerate(samples, 1):
             feedback_parts.append(f"""
 {i}. {response.persona_name}:
-   - Interest: {response.interest_score}/5
-   - Disappointment: {response.disappointment}
+   - Interest: {response.interest_response}
+   - Disappointment: {response.disappointment_response}
+   - Recommendation: {response.recommendation_response}
    - Main Benefit: {response.main_benefit}
    - Concerns: {', '.join(response.concerns)}
-   - Recommend: {response.likelihood_to_recommend}/10
 """.strip())
         
         return "\n\n".join(feedback_parts)
