@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (repository maintenance)
+- Project renamed to `synthetic-consumer-research` in `pyproject.toml`, config and links; README CI badge points at this repository
+- `semantic-similarity-rating` pinned to a commit and the lockfile refreshed
+- CI uses `astral-sh/setup-uv` and `uv sync --locked`; Dependabot added for uv and GitHub Actions
+- Session artifacts removed from the root (`CI_FIXES.md`, `CI_FIX_ROUND2.md`, `FINAL_COMMIT_MESSAGE.md`, `IMPLEMENTATION_SUMMARY.md`, `IMPROVEMENTS_SUMMARY.md`, `ACADEMIC_REFERENCES_UPDATE.md`, `SSR_V3_CHANGELOG.md`); design notes moved to `docs/`
+- README rewritten from the code
+
 ### Added
 - Enhanced metrics implementation with superfan ratio as primary viability indicator
 - Custom exception classes for better error handling and debugging

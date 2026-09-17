@@ -1,11 +1,11 @@
 [project]
-name = "product-ideation-system"
+name = "synthetic-consumer-research"
 version = "1.0.0"
-description = "AI-powered product concept generation and market validation with automated social media export"
+description = "AI product ideation pipeline: generate concepts, validate with synthetic consumer personas, score PMF, export launch content"
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [
-    {name = "Product Ideation System"}
+    {name = "bluzername"}
 ]
 keywords = ["ai", "product-management", "market-research", "ideation", "pmf", "social-media"]
 classifiers = [
@@ -31,7 +31,7 @@ dependencies = [
     "polars>=0.20.0",
     "scipy>=1.10.0",
     "sentence-transformers>=2.2.0",
-    "semantic-similarity-rating @ git+https://github.com/pymc-labs/semantic-similarity-rating.git",
+    "semantic-similarity-rating @ git+https://github.com/pymc-labs/semantic-similarity-rating.git@86dcd2597c7824e4fd6546b884c5500c43a4b022",
 ]
 
 [project.scripts]
