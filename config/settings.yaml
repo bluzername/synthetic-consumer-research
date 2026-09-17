@@ -82,7 +82,7 @@ social_media:
 ethics:
   ai_disclosure: true
   disclosure_emoji: "🤖"
-  methodology_link: "https://github.com/yourusername/product-ideation-system"
+  methodology_link: "https://github.com/bluzername/synthetic-consumer-research/blob/main/docs/METHODOLOGY.md"
   
   x_disclosure: "🤖 AI-powered product ideation. Methodology: {link}"
   linkedin_disclosure: |

@@ -28,8 +28,8 @@ This project follows a simple code of conduct:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/your-username/product-ideation-system.git
-   cd product-ideation-system
+   git clone https://github.com/bluzername/synthetic-consumer-research.git
+   cd synthetic-consumer-research
    ```
 3. **Set up the development environment** (see below)
 4. **Create a branch** for your changes:
@@ -65,7 +65,7 @@ uv run pytest tests/ -v
 ## Project Structure
 
 ```
-product-ideation-system/
+synthetic-consumer-research/
 ├── src/
 │   ├── agents/          # AI agents (ideator, critic, etc.)
 │   ├── orchestration/   # LangGraph workflow
