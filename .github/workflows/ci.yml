@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: astral-sh/setup-uv@v6
         with:
@@ -33,7 +33,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv python install 3.13
       - name: Check Python syntax
@@ -42,7 +42,7 @@ jobs:
   structure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check required files and directories
         run: |
           for f in README.md LICENSE CONTRIBUTING.md CHANGELOG.md pyproject.toml uv.lock config/settings.yaml config/prompts.yaml docs/README.md docs/SETUP.md docs/METHODOLOGY.md docs/ETHICS.md; do
